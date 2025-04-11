@@ -1,0 +1,18 @@
+[package]
+name = "syslog_ws"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.86"
+capnp = "0.21.0"
+chrono = { version = "0.4.38", features = ["serde"] }
+futures-util = { version = "0.3.31", features = ["sink"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+tokio = { version = "1.44.2", features = ["full"] }
+tokio-tungstenite = "0.26.2"
+zmq = "0.10.0"
+
+[build-dependencies]
+capnpc = "0.21.0"
