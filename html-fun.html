@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Syslog WebSocket Viewer</title>
+    <title>Retime NetHealth Syslog Message Viewer</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -147,7 +147,7 @@
         <div class="controls">
             <div class="settings-row">
                 <label for="wsUrl">WebSocket URL:</label>
-                <input type="text" id="wsUrl" value="ws://192.168.20.138:18056" /> <!-- my local docker container -->
+                <input type="text" id="wsUrl" value="ws://localhost:18056" /> <!-- my local docker container -->
                 <button id="connectBtn">Connect</button>
                 <button id="disconnectBtn" disabled>Disconnect</button>
                 <button id="clearBtn">Clear Messages</button>
@@ -180,6 +180,23 @@
         const connectionStatus = document.getElementById('connectionStatus');
         const connectionIndicator = document.getElementById('connectionIndicator');
         const messageTableBody = document.getElementById('messageTableBody');
+
+        // Mapping severity levels to their names according to RFC 5424
+        const severityLevels = {
+            0: "Emergency",
+            1: "Alert",
+            2: "Critical",
+            3: "Error",
+            4: "Warning",
+            5: "Notice",
+            6: "Info",
+            7: "Debug"
+        };
+
+        // Get severity name from severity level
+        function getSeverityName(level) {
+            return severityLevels[level] || "Unknown";
+        }
 
         // Attach event listeners
         connectBtn.addEventListener('click', connectWebSocket);
@@ -276,8 +293,13 @@
         function addMessageToTable(message) {
             clearEmptyState();
 
-            // Format timestamp
-            const timestamp = new Date(message.timestamp).toLocaleString();
+            // Format timestamp (use timestamp_raw if available, otherwise current time)
+            const timestamp = message.timestamp_raw ? 
+                new Date(message.timestamp_raw).toLocaleString() : 
+                new Date().toLocaleString();
+            
+            // Get severity name from level
+            const severityName = getSeverityName(message.severity).toLowerCase();
             
             // Create new row
             const row = document.createElement('tr');
@@ -285,8 +307,8 @@
             // Build row content
             row.innerHTML = `
                 <td>${timestamp}</td>
-                <td>${message.source}</td>
-                <td><span class="severity-pill severity-${message.severity_name.toLowerCase()}">${message.severity_name}</span></td>
+                <td>${message.source || 'Unknown'}</td>
+                <td><span class="severity-pill severity-${severityName}">${getSeverityName(message.severity)}</span></td>
                 <td>${escapeHtml(message.raw_message)}</td>
             `;
 
@@ -300,6 +322,7 @@
         }
 
         function escapeHtml(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
